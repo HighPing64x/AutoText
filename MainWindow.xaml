@@ -1,0 +1,182 @@
+﻿<Window x:Class="AutoText.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="AutoText" Height="600" Width="900">
+    <Grid Margin="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <TextBlock x:Name="TxtWindowTitle" Text="AutoText 模拟打字" FontSize="18" FontWeight="Bold" Margin="4"/>
+
+        <TabControl Grid.Row="1" Margin="0,8,0,8" x:Name="MainTabs">
+            <!-- 主页 -->
+            <TabItem Header="主页">
+                <Grid Margin="8">
+                    <StackPanel>
+                        <TextBlock x:Name="TxtNoteSelectPreview" Text="选择文件后可在导入页预览并在目标窗口发送。" Margin="0,0,0,6"/>
+                        <StackPanel Orientation="Horizontal" Margin="0,8,0,0" VerticalAlignment="Center">
+                            <Button x:Name="BtnStartStop" Width="120" Height="34" Click="BtnStartStop_Click">开始（发送）</Button>
+                            <TextBlock x:Name="TxtStatus" Margin="12,0,0,0" VerticalAlignment="Center">状态：就绪</TextBlock>
+                        </StackPanel>
+                        <CheckBox x:Name="ChkTopMost" Content="窗口置顶（便于启停）" Margin="0,8,0,0"/>
+                        <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                            <TextBlock x:Name="TxtLblSelectedFile" Text="选中文件：" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                            <ComboBox x:Name="CbFiles" Width="400" DisplayMemberPath="Name" />
+                        </StackPanel>
+                    </StackPanel>
+                </Grid>
+            </TabItem>
+
+            <!-- 导入（含预览） -->
+            <TabItem Header="导入（预览）">
+                <!-- 使用 Grid 让左侧列表和右侧预览都可伸缩 -->
+                <Grid Margin="8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="280"/>
+                        <ColumnDefinition Width="8"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- 左侧：文件列表 -->
+                    <Grid Grid.Column="0">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <Button x:Name="BtnRefreshFiles" Click="BtnRefreshFiles_Click" Margin="0,0,0,8">刷新文件列表</Button>
+                        <ListBox x:Name="LstFiles" Grid.Row="1" DisplayMemberPath="Name" SelectionChanged="LstFiles_SelectionChanged" VerticalAlignment="Stretch"/>
+                        <TextBlock x:Name="TxtFileEncoding" Grid.Row="2" Margin="0,8,0,0" />
+                    </Grid>
+
+                    <GridSplitter Grid.Column="1" Width="6" HorizontalAlignment="Stretch"/>
+
+                    <!-- 右侧：预览 -->
+                    <Grid Grid.Column="2">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+
+                        <TextBlock x:Name="TxtPreviewTitle" Text="预览（只读）" FontWeight="Bold"/>
+                        <TextBox x:Name="TbPreview" Grid.Row="1" AcceptsReturn="True" VerticalScrollBarVisibility="Auto" TextWrapping="Wrap" IsReadOnly="True" Margin="0,6,0,0" FontFamily="Consolas" VerticalAlignment="Stretch" />
+                    </Grid>
+                </Grid>
+            </TabItem>
+
+            <!-- 设置 -->
+            <TabItem Header="设置">
+                <ScrollViewer>
+                    <StackPanel Margin="8" Width="700">
+                        <TextBlock x:Name="TxtSectionTargetWindow" Text="目标窗口选择" FontWeight="Bold" Margin="0,0,0,6"/>
+                        <StackPanel Orientation="Horizontal">
+                            <RadioButton x:Name="RbActiveWindow" Content="发送到当前窗口（先切换到输入框）" IsChecked="True" Margin="0,0,12,0"/>
+                            <RadioButton x:Name="RbLockedWindow" Content="锁定特定窗口（锁定后始终发送到该窗口）" Margin="0,0,12,0"/>
+                            <Button x:Name="BtnLockWindow" Click="BtnLockWindow_Click">锁定当前窗口</Button>
+                            <TextBlock x:Name="TxtLockedWindow" Margin="8,0,0,0" VerticalAlignment="Center"/>
+                        </StackPanel>
+
+                        <Separator Margin="0,8"/>
+
+                        <TextBlock x:Name="TxtSectionSendMethod" Text="发送方式" FontWeight="Bold" Margin="0,6,0,6"/>
+                        <StackPanel Orientation="Horizontal">
+                            <RadioButton x:Name="RbSendInput" Content="逐字符 SendInput（默认）" IsChecked="True" Margin="0,0,12,0"/>
+                            <RadioButton x:Name="RbClipboard" Content="剪贴板粘贴（先复制再 Ctrl+V）" Margin="0,0,12,0"/>
+                        </StackPanel>
+
+                        <Separator Margin="0,8"/>
+
+                        <TextBlock x:Name="TxtSectionRhythm" Text="打字节奏与行为" FontWeight="Bold" Margin="0,6,0,6"/>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                            <TextBlock x:Name="TxtLblDelayPerChar" Text="每字符延迟(ms)：" VerticalAlignment="Center"/>
+                            <TextBox x:Name="TbDelayMin" Width="60" Margin="6,0,6,0" Text="50"/>
+                            <TextBlock Text="~" VerticalAlignment="Center"/>
+                            <TextBox x:Name="TbDelayMax" Width="60" Margin="6,0,6,0" Text="150"/>
+                            <TextBlock x:Name="TxtNoteDelayRange" Text="（可为固定或随机区间）" VerticalAlignment="Center" Margin="6,0,0,0"/>
+                        </StackPanel>
+
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                            <TextBlock x:Name="TxtLblLinePause" Text="换行额外停顿(ms)：" VerticalAlignment="Center"/>
+                            <TextBox x:Name="TbLinePause" Width="80" Margin="6,0,0,0" Text="200"/>
+                        </StackPanel>
+
+                        <StackPanel Orientation="Horizontal" Margin="0,6,0,6" VerticalAlignment="Center">
+                            <TextBlock x:Name="TxtLblEnterMethod" Text="回车发送方式：" VerticalAlignment="Center"/>
+                            <RadioButton x:Name="RbEnter" Content="Enter" Margin="8,0,6,0" IsChecked="True"/>
+                            <RadioButton x:Name="RbCtrlEnter" Content="Ctrl+Enter" Margin="6,0,0,0"/>
+                        </StackPanel>
+
+                        <CheckBox x:Name="ChkSimulateTypos" Content="模拟错别字并回退（提高拟真度）" Margin="0,6,0,0"/>
+
+                        <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                            <TextBlock x:Name="TxtLblSendOrder" Text="发送顺序：" VerticalAlignment="Center"/>
+                            <ComboBox x:Name="CbSendOrder" Width="140" Margin="6,0,0,0">
+                                <ComboBoxItem x:Name="CbSendOrderItemSequential" Content="按顺序（默认）" IsSelected="True"/>
+                                <ComboBoxItem x:Name="CbSendOrderItemRandom" Content="随机行发送"/>
+                            </ComboBox>
+                        </StackPanel>
+
+                        <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                            <CheckBox x:Name="ChkLoop" Content="循环发送文件" Margin="0,0,12,0"/>
+                                <TextBlock x:Name="TxtLblLoopInterval" Text="循环间隔(ms)：" VerticalAlignment="Center"/>
+                            <TextBox x:Name="TbLoopInterval" Width="120" Margin="6,0,0,0" Text="1000"/>
+                        </StackPanel>
+
+                        <Separator Margin="0,8"/>
+
+                        <TextBlock x:Name="TxtSectionHotkey" Text="热键与倒计时" FontWeight="Bold" Margin="0,6,0,6"/>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                            <CheckBox x:Name="ChkGlobalHotkey" Content="启用全局热键 Ctrl+Shift+T" IsChecked="True" Margin="0,0,12,0"/>
+                            <TextBlock x:Name="TxtLblCountdown" Text="触发前倒计时(s)：" VerticalAlignment="Center"/>
+                            <TextBox x:Name="TbCountdown" Width="60" Margin="6,0,0,0" Text="3"/>
+                        </StackPanel>
+
+                        <Separator Margin="0,8"/>
+                        <Button x:Name="BtnSaveSettings" Width="120" Click="BtnSaveSettings_Click">保存设置</Button>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <!-- 更多操作 -->
+            <TabItem Header="更多操作">
+                    <StackPanel Margin="8" Width="700">
+                    <TextBlock x:Name="TxtMorePreKeysLabel" Text="输入前按键（特殊键必须写在花括号内，例如 {F1}、{Insert}，普通字符直接写入，仅支持单个键）" TextWrapping="Wrap"/>
+                    <TextBox x:Name="TbPreKeys" Margin="0,6,0,8"/>
+
+                    <TextBlock x:Name="TxtMorePrefixLabel" Text="输入前输入内容（例如: Prefix | ）" Margin="0,0,0,4"/>
+                    <TextBox x:Name="TbPrefix" Margin="0,6,0,8"/>
+
+                    <TextBlock x:Name="TxtMorePostKeysLabel" Text="输入后按键（同上）" TextWrapping="Wrap"/>
+                    <TextBox x:Name="TbPostKeys" Margin="0,6,0,8"/>
+
+                    <TextBlock x:Name="TxtMoreSuffixLabel" Text="输入后输入内容（例如: | Suffix）" Margin="0,0,0,4"/>
+                    <TextBox x:Name="TbSuffix" Margin="0,6,0,8"/>
+
+                    <TextBlock x:Name="TxtMoreNote" Text="注意：特殊按键请用花括号包裹，如 {F1}、{Insert}，普通文本可直接输入（设置会随“保存设置”保存在 settings.ini 的 [More] 节。）" TextWrapping="Wrap" Opacity="0.8" Margin="0,8,0,0"/>
+                </StackPanel>
+            </TabItem>
+
+            <!-- 其他 -->
+            <TabItem Header="其他">
+                <StackPanel Margin="8">
+                    <TextBlock x:Name="TxtSectionLangSettings" Text="语言设置" FontWeight="Bold" Margin="0,0,0,8"/>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                        <TextBlock x:Name="TxtLblCurrentLang" Text="当前语言：" VerticalAlignment="Center"/>
+                        <ComboBox x:Name="CbLangFiles" Width="220" SelectionChanged="CbLangFiles_SelectionChanged" Margin="8,0,0,0"/>
+                        <Button x:Name="BtnRefreshLang" Content="刷新语言列表" Click="BtnRefreshLang_Click" Margin="12,0,0,0"/>
+                    </StackPanel>
+                    <TextBlock x:Name="TxtLangDesc" Text="描述：" Margin="0,0,0,2"/>
+                    <TextBlock x:Name="TxtLangAuthor" Text="作者：" Margin="0,0,0,2"/>
+                    <Separator Margin="0,12,0,0"/>
+                    <!-- 其他原有内容 -->
+                </StackPanel>
+            </TabItem>
+        </TabControl>
+
+        <TextBlock x:Name="TxtNoteDataFolder" Grid.Row="2" Text="提示：将要发送的 .txt 放到程序根目录下的 Data 文件夹中。" Opacity="0.8"/>
+    </Grid>
+</Window>
